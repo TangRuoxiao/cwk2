@@ -7,7 +7,7 @@
 int state[50][50];
 int next[50][50];
 int col = 0, row = 0;
-
+//the module to create a new window
 SDL_Window *newWin(char *name)
 {
     SDL_Window *win = SDL_CreateWindow(
@@ -15,10 +15,10 @@ SDL_Window *newWin(char *name)
         SDL_WINDOWPOS_CENTERED, 
         SDL_WINDOWPOS_CENTERED, 
         CELL * col,             
-        CELL * row,             
+        CELL * row,            
         0                       
     );
-
+//check if fault
     if (win == NULL)
     {
         printf("window created wrongly\n");
@@ -27,7 +27,7 @@ SDL_Window *newWin(char *name)
 
     return win;
 }
-
+//the module to create a new renderer
 SDL_Renderer *newRen(SDL_Window *window)
 {
     SDL_Renderer *ren = SDL_CreateRenderer(
@@ -35,7 +35,7 @@ SDL_Renderer *newRen(SDL_Window *window)
         -1,                      
         SDL_RENDERER_ACCELERATED 
     );
-
+//check if fault
     if (ren == NULL)
     {
         printf("renderer created wrongly\n");
@@ -47,6 +47,7 @@ SDL_Renderer *newRen(SDL_Window *window)
 
 void display(SDL_Renderer *ren)
 {
+    //draw lines
     for (int v = CELL; v < CELL * col; v += CELL)
     {
         SDL_SetRenderDrawColor(ren, 110, 110, 110, 110);
@@ -57,6 +58,7 @@ void display(SDL_Renderer *ren)
         SDL_SetRenderDrawColor(ren, 110, 110, 110, 110);
         SDL_RenderDrawLine(ren, 0, h, CELL * col, h);
     }
+    //draw cells
     SDL_Rect rect;
     rect.w = CELL + 1;
     rect.h = CELL + 1;
@@ -74,16 +76,18 @@ void display(SDL_Renderer *ren)
         }
     }
 }
-
-int read()
+//the module to read in the data
+int read(char *filename)
 {
     FILE *file;
-    file = fopen("init.txt", "r");
-    if (file == NULL)
+    file = fopen(filename, "r");
+    //check if fault
+    if (file == NULL||filename==NULL)
     {
         printf("file not found");
         return -1;
     }
+    //read
     fscanf(file, "%d%d\n", &col, &row);
     char c;
     for (int i = 0; i < col; ++i)
@@ -109,9 +113,15 @@ int read()
     fclose(file);
     return 0;
 }
-int write()
+//the module to write the data
+int write(char *filename)
 {
-    FILE *file = fopen("final.txt", "w+");
+    FILE *file = fopen(filename, "w+");
+    //write
+    if (filename==NULL)
+    {
+        return -1;
+    }
     fprintf(file, "%d %d\n", col, row);
     for (int i = 0; i < col; i++)
     {
@@ -129,8 +139,10 @@ int write()
     }
     return 0;
 }
+//the module to get the next generation
 int nextgeneretion()
 {
+    //generate another one
     int livesum = 0;
     for (int i = 0; i < col; i++)
     {
@@ -207,6 +219,7 @@ int nextgeneretion()
             }
         }
     }
+    //copy it back to the state
     for (int i = 0; i < col; i++)
     {
         for (int j = 0; j < row; j++)
@@ -216,7 +229,7 @@ int nextgeneretion()
     }
     return 0;
 }
-
+// the main module
 int main(int argc, char *argv[])
 {
     int times=0;
@@ -226,8 +239,8 @@ int main(int argc, char *argv[])
     }
     
     int mx,my;
-    read();
-
+    read("init.txt");
+//init everything
     if (SDL_Init(SDL_INIT_VIDEO) != 0)
     {
         printf("error initializing SDL: %s\n", SDL_GetError());
@@ -235,12 +248,12 @@ int main(int argc, char *argv[])
     }
     SDL_Window *win = newWin("game of life");
     SDL_Renderer *ren = newRen(win);
-
+//event init
     SDL_Event windowEvent;
     int run = 1;
     int click=0,start=0;
     int n=0;
-
+//event start
     while (run)
     {   
         click=0;
@@ -266,6 +279,7 @@ int main(int argc, char *argv[])
                     if(windowEvent.key.keysym.sym == SDLK_SPACE)start=1;
             }
         }
+        //if click
         SDL_GetMouseState(&mx,&my);
         if (click)
         {
@@ -276,19 +290,19 @@ int main(int argc, char *argv[])
             nextgeneretion();
             n++;
         }
-        
+        //draw
         SDL_SetRenderDrawColor(ren, 255, 255, 255, 255);
         SDL_RenderClear(ren);
         display(ren);
         SDL_RenderPresent(ren);
-
+//wait
         if (start)
         {
             SDL_Delay(1000/30);
         }
     }
-
+//quit
     SDL_Quit();
-    write();
+    write("final.txt");
     return 0;
 }
